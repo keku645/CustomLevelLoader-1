@@ -48,7 +48,7 @@ function LevelLoader:RegisterEvents()
         p_Instance.loadedTimeout = CLIENT_TIMEOUT
         p_Instance.loadingTimeout = CLIENT_TIMEOUT
         p_Instance.ingameTimeout = CLIENT_TIMEOUT
-        print("Changed ClientSettings")
+        m_Logger:Write("Changed ClientSettings")
     end)
 
     ResourceManager:RegisterInstanceLoadHandler(Guid('C4DCACFF-ED8F-BC87-F647-0BC8ACE0D9B4'), Guid('818334B3-CEA6-FC3F-B524-4A0FED28CA35'), function(p_Instance)
@@ -57,7 +57,7 @@ function LevelLoader:RegisterEvents()
         p_Instance.loadingTimeout = CLIENT_TIMEOUT
         p_Instance.ingameTimeout = CLIENT_TIMEOUT
         p_Instance.timeoutTime = CLIENT_TIMEOUT
-        print("Changed ServerSettings")
+        m_Logger:Write("Changed ServerSettings")
     end)
 end
 
@@ -182,20 +182,20 @@ end
 
 function LevelLoader:PatchOriginalObject(p_Object, p_World)
 	if p_Object.originalRef == nil then
-		print("Object without original reference found, dynamic object?")
+		m_Logger:Warn("Object without original reference found, dynamic object?")
 		return
 	end
 	local s_Reference = nil
 	if p_Object.originalRef.partitionGuid == nil or p_Object.originalRef.partitionGuid == "nil" then -- perform a search without partitionguid
 		 s_Reference = ResourceManager:SearchForInstanceByGuid(Guid(p_Object.originalRef.instanceGuid))
 		 if s_Reference == nil then
-		 	print("Unable to find original reference: " .. p_Object.originalRef.instanceGuid)
+		 	m_Logger:Warn("Unable to find original reference: " .. p_Object.originalRef.instanceGuid)
 		 	return
 		 end
 	else
 		 s_Reference = ResourceManager:FindInstanceByGuid(Guid(p_Object.originalRef.partitionGuid), Guid(p_Object.originalRef.instanceGuid))
 		 if s_Reference == nil then
-		 	print("Unable to find original reference: " .. p_Object.originalRef.instanceGuid .. " in partition " .. p_Object.originalRef.partitionGuid)
+		 	m_Logger:Warn("Unable to find original reference: " .. p_Object.originalRef.instanceGuid .. " in partition " .. p_Object.originalRef.partitionGuid)
 		 	return
 		 end
 	end
@@ -214,7 +214,7 @@ end
 function LevelLoader:AddCustomObject(p_Object, p_World, p_RegistryContainer)
 	local s_Blueprint = ResourceManager:FindInstanceByGuid(Guid(p_Object.blueprintCtrRef.partitionGuid), Guid(p_Object.blueprintCtrRef.instanceGuid))
 	if s_Blueprint == nil then
-		print('Cannot find blueprint with guid ' .. tostring(p_Object.blueprintCtrRef.instanceGuid))
+		m_Logger:Warn('Cannot find blueprint with guid ' .. tostring(p_Object.blueprintCtrRef.instanceGuid))
 		return
 	end
 
@@ -282,7 +282,7 @@ function LevelLoader:CreateWorldPart(p_PrimaryLevel, p_RegistryContainer)
 		end
 	end
 	-- m_IndexCount = 30000
-	print('Index count is: '..tostring(self.m_IndexCount))
+	m_Logger:Write('Index count is: '..tostring(self.m_IndexCount))
 
 	for _, l_Object in pairs(self.m_CustomLevelData.data) do
 		if l_Object.origin == GameObjectOriginType.Custom then
@@ -307,14 +307,8 @@ function LevelLoader:CreateWorldPart(p_PrimaryLevel, p_RegistryContainer)
 end
 
 function LevelLoader:GetCustomLevel(p_LevelName, p_GameModeName)
-	print(p_LevelName)
-	print(p_GameModeName)
 	local s_LevelName = p_LevelName:split('/')[3]
-	print(s_LevelName)
-
 	local s_Path = '__shared/Levels/' .. s_LevelName .. '/' .. s_LevelName .. '_' .. p_GameModeName
-
-	print(s_Path)
 
 	local s_Ok, s_PresetJson = pcall(require, s_Path)
 	s_PresetJson = s_Ok and s_PresetJson or nil
