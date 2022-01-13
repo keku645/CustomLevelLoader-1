@@ -5,6 +5,8 @@ GameObjectOriginType = {
 }
 
 local CLIENT_TIMEOUT = 25
+local SP_TERRAIN_WORLD_PART_DATA_GUID = Guid('68D438B3-FF1B-47D7-BCB4-F484E67CA700')
+local SP_TERRAIN_WORLD_PART_REFERENCE_OBJECT_DATA_GUID = Guid('93842B6D-0185-483D-9EF5-AD2B47BDABDE')
 
 -- This is a global table that stores the save file data as a Lua table. Will be populated on-demand by
 -- the server via NetEvents on the client-side
@@ -13,7 +15,8 @@ local m_PrimaryLevelGuids = nil
 
 local m_IndexCount = 0
 local m_OriginalLevelIndeces = {}
-local m_LastLoadedMap = nil
+local m_LastLoadedLevelName = nil
+local m_LastLoadedGameModeName = nil
 local m_ObjectVariations = {}
 local m_PendingVariations = {}
 local m_PrimaryLevelGuids = { }
@@ -98,7 +101,7 @@ local function AddCustomObject(p_Object, p_World, p_RegistryContainer)
 end
 
 local function CreateWorldPart(p_PrimaryLevel, p_RegistryContainer)
-	local s_World = WorldPartData()
+	local s_World = WorldPartData(SP_TERRAIN_WORLD_PART_DATA_GUID)
 	p_RegistryContainer.blueprintRegistry:add(s_World)
 
 	--find index
@@ -132,9 +135,11 @@ local function CreateWorldPart(p_PrimaryLevel, p_RegistryContainer)
 		end
 		-- TODO handle CustomChild
 	end
-	m_LastLoadedMap = SharedUtils:GetLevelName()
 
-	local s_WorldPartReference = WorldPartReferenceObjectData()
+	m_LastLoadedLevelName = SharedUtils:GetLevelName()
+	m_LastLoadedGameModeName = SharedUtils:GetCurrentGameMode()
+
+	local s_WorldPartReference = WorldPartReferenceObjectData(SP_TERRAIN_WORLD_PART_REFERENCE_OBJECT_DATA_GUID)
 	s_WorldPartReference.blueprint = s_World
 
 	s_WorldPartReference.isEventConnectionTarget = Realm.Realm_None
@@ -255,8 +260,8 @@ Events:Subscribe('Level:LoadingInfo', function(p_Info)
 
 		s_PrimaryLevel = LevelData(s_PrimaryLevel)
 
-		if m_LastLoadedMap == SharedUtils:GetLevelName() then
-			print('Same map loading, skipping')
+		if m_LastLoadedLevelName == SharedUtils:GetLevelName() and m_LastLoadedGameModeName == SharedUtils:GetCurrentGameMode() then
+			print('Same map and gamemode loading, skipping')
 			return
 		end
 
